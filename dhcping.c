@@ -324,7 +324,7 @@ int main(int argc,char **argv)
   if (request)
     {
       if (VERBOSE) puts("DHCP REQUEST");
-      dhcp_request(ci,gi,hw,opt82mac,opt60);
+      dhcp_request(ci,gi,hw,opt82mac,opt60);						// ########################
     }
   if (leasequery)
     {
@@ -527,15 +527,15 @@ void dhcp_packet(int type,char *ipaddr,char *opt50,char *opt60,char *opt82,char 
   int ip[4],gw[4],hw[16],ip50[4],opt82mac[6];
   int hwcount;
 
-  sscanf(ipaddr,"%d.%d.%d.%d",&ip[0],&ip[1],&ip[2],&ip[3]);
+  sscanf(ipaddr,"%d.%d.%d.%d",&ip[0],&ip[1],&ip[2],&ip[3]);	//Mitgegebene IP wird im array ip gespeichert
 
-  sscanf(gwaddr,"%d.%d.%d.%d",&gw[0],&gw[1],&gw[2],&gw[3]);
+  sscanf(gwaddr,"%d.%d.%d.%d",&gw[0],&gw[1],&gw[2],&gw[3]);	//Mitgegebene Gateway IP wird im Array gw gespeichert
 
   if (opt50)
-    sscanf(opt50,"%d.%d.%d.%d",&ip50[0],&ip50[1],&ip50[2],&ip50[3]);
+    sscanf(opt50,"%d.%d.%d.%d",&ip50[0],&ip50[1],&ip50[2],&ip50[3]); //Vll Request IP, also gewünschte IP vom Router
 
   if (opt82)
-    sscanf(opt82,"%x:%x:%x:%x:%x:%x",&opt82mac[0],&opt82mac[1],&opt82mac[2],&opt82mac[3],&opt82mac[4],&opt82mac[5]);
+    sscanf(opt82,"%x:%x:%x:%x:%x:%x",&opt82mac[0],&opt82mac[1],&opt82mac[2],&opt82mac[3],&opt82mac[4],&opt82mac[5]);	//Opt82 wsl sowas wie die Transaktions-ID
 
   //printf("\n\nDEBUG: %s\n\n", opt60);
 
@@ -548,18 +548,18 @@ void dhcp_packet(int type,char *ipaddr,char *opt50,char *opt60,char *opt82,char 
 
   memset(msgbuf,0,sizeof(msgbuf));
   sprintf(msgbuf,"\1\1%c%c",hwcount,0);
-  addpacket(pktbuf,msgbuf,4);
+  addpacket(pktbuf,msgbuf,4);		// MAC Adresse wird in den Buffer geschrieben
 
   /* xid */
   if (l>time(NULL))
     l++;
   else
     l=time(NULL);
-  memcpy(msgbuf,&l,4);
-  addpacket(pktbuf,msgbuf,4);
+  memcpy(msgbuf,&l,4);	// xid = Used by the clients to identify server responses
+  addpacket(pktbuf,msgbuf,4); //Schaut ob das auch die Antwort auf meine Frage war
 
   /* secs and flags */
-  memset(msgbuf,0,4);
+  memset(msgbuf,0,4); 	//Flags = 0000
   addpacket(pktbuf,msgbuf,4);
   /*  sprintf(msgbuf,"%c%c",0x80,0x00); */
   /*  sprintf(msgbuf,"%c%c",0x00,0x00); */
@@ -567,40 +567,40 @@ void dhcp_packet(int type,char *ipaddr,char *opt50,char *opt60,char *opt82,char 
 
   /* ciaddr */
   memset(msgbuf,0,4);
-  sprintf(msgbuf,"%c%c%c%c",ip[0],ip[1],ip[2],ip[3]);
-  addpacket(pktbuf,msgbuf,4);
+  sprintf(msgbuf,"%c%c%c%c",ip[0],ip[1],ip[2],ip[3]);	// Client IP Adresse
+  addpacket(pktbuf,msgbuf,4);	//Write Client IP Adresse
 
   /* yiaddr */
   memset(msgbuf,0,4);
-  addpacket(pktbuf,msgbuf,4);
+  addpacket(pktbuf,msgbuf,4);	// Schreibt eigene IP Adresse = 0000
 
   /* siaddr */
   memset(msgbuf,0,4);
-  addpacket(pktbuf,msgbuf,4);
+  addpacket(pktbuf,msgbuf,4);	// Server IP Adresse = 0000
 
   /* giaddr */
-  sprintf(msgbuf,"%c%c%c%c",gw[0],gw[1],gw[2],gw[3]);
-  addpacket(pktbuf,msgbuf,4);
+  sprintf(msgbuf,"%c%c%c%c",gw[0],gw[1],gw[2],gw[3]);	//Gateway IP Adresse 
+  addpacket(pktbuf,msgbuf,4);	// BUFF Gateway IP
 
   /* chaddr */
   sprintf(msgbuf,"%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
           hw[0],hw[1],hw[2],hw[3],hw[4],hw[5],hw[6],hw[7],
           hw[8],hw[9],hw[10],hw[11],hw[12],hw[13],hw[14],hw[15]);
-  addpacket(pktbuf,msgbuf,16);
+  addpacket(pktbuf,msgbuf,16);	// BUFF Mac-Adresse
 
   /* sname */
   memset(msgbuf,0,64);
-  addpacket(pktbuf,msgbuf,64);
+  addpacket(pktbuf,msgbuf,64);	// BUFF 64x0
 
   /* file */
   memset(msgbuf,0,128);
-  addpacket(pktbuf,msgbuf,128);
+  addpacket(pktbuf,msgbuf,128);	// BUFF 128x0
 
   /* options */
   {
     /* cookie */
-    sprintf(msgbuf,"%c%c%c%c",99,130,83,99);
-    addpacket(pktbuf,msgbuf,4);
+    sprintf(msgbuf,"%c%c%c%c",99,130,83,99);	//msgbuf = 991308399
+    addpacket(pktbuf,msgbuf,4);	// BUFF 991308399
 
     /* dhcp-type */
     sprintf(msgbuf,"%c%c%c",53,1,type);
@@ -671,6 +671,7 @@ void dhcp_packet(int type,char *ipaddr,char *opt50,char *opt60,char *opt82,char 
   dhcp_dump(pktbuf,offset);
 
 // send to dhcp socket
+
   sendto(dhcp_socket,pktbuf,offset,0,(struct sockaddr *)&dhcp_to,sizeof(dhcp_to));
 
   offset=0;
